@@ -1,0 +1,20 @@
+--Patient table
+
+CREATE TABLE public.patients (
+    primary_id INT PRIMARY KEY,
+
+    name TEXT NOT NULL,
+
+    date_of_birth DATE NOT NULL,
+
+    contact_number TEXT,
+
+    family_member_name TEXT,
+
+    family_member_contact TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT valid_dob
+        CHECK (date_of_birth <= CURRENT_DATE)
+);
