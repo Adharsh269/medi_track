@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./config/db.js";
+import patientRoutes from "./modules/patients/patient.routes.js";
 
 dotenv.config();
 
@@ -10,6 +11,17 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.post("/api/test", (req, res) => {
+  console.log("Received body:", req.body);
+
+  res.status(200).json({
+    message: "Postman body received successfully!",
+    receivedData: req.body,
+  });
+});
+
+app.use("/api/patients", patientRoutes);
 
 //server code
 app.get("/", async (req, res) => {
