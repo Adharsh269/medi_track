@@ -78,3 +78,72 @@ CREATE TABLE public.adherence_scores (
 
 CREATE INDEX idx_adherence_patient_period
     ON public.adherence_scores(patient_id, end_date DESC);
+-- 4. Patient family contacts
+-- Family contacts do not need professional user accounts.
+CREATE TABLE public.patient_family_contacts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    patient_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    relationship TEXT,
+    whatsapp_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_family_contacts_patient
+    ON public.patient_family_contacts(patient_id, active);
+
+-- 5. Medications
+CREATE TABLE public.medications (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    patient_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    times TIME[] NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    pills_remaining INTEGER,
+    refill_threshold INTEGER NOT NULL DEFAULT 5,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_date IS NULL OR end_date >= start_date),
+    CHECK (pills_remaining IS NULL OR pills_remaining >= 0),
+    CHECK (refill_threshold >= 0),
+    CHECK (cardinality(times) > 0)
+);
+
+CREATE INDEX idx_medications_patient_active
+    ON public.medications(patient_id, active);
+
+-- 6. Individual scheduled dose records
+CREATE TABLE public.dose_logs (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    medication_id BIGINT NOT NULL
+        REFERENCES public.medications(id) ON DELETE RESTRICT,
+    scheduled_time TIMESTAMPTZ NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (
+            status IN (
+                'pending', 'taken', 'skipped', 'missed', 'snoozed'
+            )
+        ),
+    actual_time_taken TIMESTAMPTZ,
+    snoozed_until TIMESTAMPTZ,
+    response_source TEXT
+        CHECK (response_source IN ('web', 'whatsapp')),
+    responded_at TIMESTAMPTZ,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (medication_id, scheduled_time),
+    CHECK (
+        status <> 'taken' OR actual_time_taken IS NOT NULL
+    )
+);
+
+CREATE INDEX idx_dose_logs_status_time
+    ON public.dose_logs(status, scheduled_time);
