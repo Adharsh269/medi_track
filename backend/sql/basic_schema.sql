@@ -58,7 +58,8 @@ CREATE INDEX idx_assignments_caretaker
     ON public.caretaker_assignments(caretaker_id, status);
 
 CREATE INDEX idx_assignments_patient
-    ON public.caretaker_assignments(patient_id, status);-- 7. Notifications
+    ON public.caretaker_assignments(patient_id, status);
+-- 7. Notifications
 -- One notification represents an event to be delivered.
 CREATE TABLE public.notifications (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
