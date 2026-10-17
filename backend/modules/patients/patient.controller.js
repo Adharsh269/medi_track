@@ -3,21 +3,23 @@ import { pool } from "../../config/db.js";
 
 export async function createPatient(req, res) {
   try {
-    //data that sync with the database
     const {
       name,
       date_of_birth,
       contact_number,
       family_member_name,
       family_member_contact,
+      caretaker_id,
     } = req.body;
 
+    // Validate patient name
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({
         error: "Patient name is required",
       });
     }
 
+    // Validate date format
     if (
       typeof date_of_birth !== "string" ||
       !/^\d{4}-\d{2}-\d{2}$/.test(date_of_birth)
@@ -27,6 +29,7 @@ export async function createPatient(req, res) {
       });
     }
 
+    // Validate actual date and prevent future dates
     const dob = new Date(`${date_of_birth}T00:00:00Z`);
 
     if (
@@ -39,15 +42,17 @@ export async function createPatient(req, res) {
       });
     }
 
+    // Insert patient into PostgreSQL
     const result = await pool.query(
       `INSERT INTO public.patients (
         name,
         date_of_birth,
         contact_number,
         family_member_name,
-        family_member_contact
+        family_member_contact,
+        caretaker_id
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
         primary_id,
         name,
@@ -55,6 +60,7 @@ export async function createPatient(req, res) {
         contact_number,
         family_member_name,
         family_member_contact,
+        caretaker_id,
         created_at`,
       [
         name.trim(),
@@ -62,6 +68,7 @@ export async function createPatient(req, res) {
         contact_number ?? null,
         family_member_name ?? null,
         family_member_contact ?? null,
+        caretaker_id ?? null,
       ]
     );
 
