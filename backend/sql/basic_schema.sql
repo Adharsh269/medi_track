@@ -1,3 +1,64 @@
+-- 1. Organizations
+CREATE TABLE public.organizations (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 2. User profiles
+-- Authentication credentials remain in Supabase auth.users.
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id)
+        ON DELETE CASCADE,
+    organization_id BIGINT
+        REFERENCES public.organizations(id)
+        ON DELETE RESTRICT,
+    full_name TEXT NOT NULL,
+    role TEXT NOT NULL
+        CHECK (role IN ('patient', 'caretaker', 'org_admin')),
+    phone TEXT,
+    timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_profiles_organization
+    ON public.profiles(organization_id);
+
+-- 3. Professional caretaker assignments
+-- Keep revoked records to preserve assignment history.
+CREATE TABLE public.caretaker_assignments (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    organization_id BIGINT NOT NULL
+        REFERENCES public.organizations(id) ON DELETE RESTRICT,
+    caretaker_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    patient_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    assigned_by UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    revoked_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'revoked')),
+    CHECK (caretaker_id <> patient_id),
+    CHECK (
+        (status = 'active' AND revoked_at IS NULL)
+        OR
+        (status = 'revoked' AND revoked_at IS NOT NULL)
+    )
+);
+
+-- One active professional caretaker per patient.
+CREATE UNIQUE INDEX uq_active_caretaker_per_patient
+    ON public.caretaker_assignments(patient_id)
+    WHERE status = 'active';
+
+CREATE INDEX idx_assignments_caretaker
+    ON public.caretaker_assignments(caretaker_id, status);
+
+CREATE INDEX idx_assignments_patient
+    ON public.caretaker_assignments(patient_id, status);
 -- 7. Notifications
 -- One notification represents an event to be delivered.
 CREATE TABLE public.notifications (
@@ -78,3 +139,72 @@ CREATE TABLE public.adherence_scores (
 
 CREATE INDEX idx_adherence_patient_period
     ON public.adherence_scores(patient_id, end_date DESC);
+-- 4. Patient family contacts
+-- Family contacts do not need professional user accounts.
+CREATE TABLE public.patient_family_contacts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    patient_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    relationship TEXT,
+    whatsapp_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_family_contacts_patient
+    ON public.patient_family_contacts(patient_id, active);
+
+-- 5. Medications
+CREATE TABLE public.medications (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    patient_id UUID NOT NULL
+        REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    times TIME[] NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    pills_remaining INTEGER,
+    refill_threshold INTEGER NOT NULL DEFAULT 5,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_date IS NULL OR end_date >= start_date),
+    CHECK (pills_remaining IS NULL OR pills_remaining >= 0),
+    CHECK (refill_threshold >= 0),
+    CHECK (cardinality(times) > 0)
+);
+
+CREATE INDEX idx_medications_patient_active
+    ON public.medications(patient_id, active);
+
+-- 6. Individual scheduled dose records
+CREATE TABLE public.dose_logs (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    medication_id BIGINT NOT NULL
+        REFERENCES public.medications(id) ON DELETE RESTRICT,
+    scheduled_time TIMESTAMPTZ NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (
+            status IN (
+                'pending', 'taken', 'skipped', 'missed', 'snoozed'
+            )
+        ),
+    actual_time_taken TIMESTAMPTZ,
+    snoozed_until TIMESTAMPTZ,
+    response_source TEXT
+        CHECK (response_source IN ('web', 'whatsapp')),
+    responded_at TIMESTAMPTZ,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (medication_id, scheduled_time),
+    CHECK (
+        status <> 'taken' OR actual_time_taken IS NOT NULL
+    )
+);
+
+CREATE INDEX idx_dose_logs_status_time
+    ON public.dose_logs(status, scheduled_time);
