@@ -11,3 +11,7 @@ export const pool = new Pool({
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000,
 });
+
+pool.on("error", (err) =>{
+  console.log("Unexpected PG error", err.message)
+});

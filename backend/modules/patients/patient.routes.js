@@ -1,8 +1,13 @@
+
 import express from "express";
-import { createPatient } from "./patient.controller.js";
+import {
+  getPatients,
+  getPatientById,
+} from "./patient.controller.js";
 
 const router = express.Router();
 
-router.post("/", createPatient);
+router.get("/", getPatients);
+router.get("/:id", getPatientById);
 
 export default router;

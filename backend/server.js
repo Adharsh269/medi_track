@@ -35,6 +35,24 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+//database connection checkup
+app.get("/api/health/db", async(req, res) => {
+  try{
+    await pool.query("SELECT 1");
+    res.json({
+      success: true,
+      message: "Database connection successful",
+    });
+  } catch(err){
+    console.error("Database checking failed:", err.message);
+    res.status(500).json({
+      success:false,
+      message:"Database connection failed."
+    });
+  }
+});
+
+//seeing
 // Starting the server, checking whether the port is running on 5000 port.
 app.listen(PORT, () => {
   console.log(`MedicTrack API running at http://localhost:${PORT}`);
