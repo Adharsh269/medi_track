@@ -52,7 +52,76 @@ app.get("/api/health/db", async(req, res) => {
   }
 });
 
-//seeing
+//seeing the tables in the database
+app.get("/api/health/tables", async (req, res) =>{
+  try {
+    const result = await pool.query(`
+        SELECT table_schema, table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_type = 'BASE TABLE'
+        ORDER BY table_name
+      `);
+      res.status(200).json({
+        success:true,
+        count:result.rows.length,
+        tables:result.rows
+      });
+  } catch (error) { 
+    console.error("Table checking failed:", error)
+    res.status(500).json({
+      success:false,
+      message:"Failed to retrieve messages."
+    })
+  }
+});
+
+app.get("/api/health/columns/:table", async (req, res) => {
+  const allowedTables = [
+    "profiles",
+    "organizations",
+    "caretaker_assignments",
+    "patient_family_contacts",
+    "medications",
+    "dose_logs",
+    "notifications",
+    "notification_recipients",
+    "adherence_scores",
+  ];
+
+  const { table } = req.params;
+
+  if (!allowedTables.includes(table)) {
+    return res.status(400).json({
+      success: false,
+      message: "Unknown table",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+      ORDER BY ordinal_position`,
+      [table]
+    );
+
+    res.json({
+      success: true,
+      table,
+      columns: result.rows,
+    });
+  } catch (error) {
+    console.error("Column lookup failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Could not retrieve table columns",
+    });
+  }
+});
+
 // Starting the server, checking whether the port is running on 5000 port.
 app.listen(PORT, () => {
   console.log(`MedicTrack API running at http://localhost:${PORT}`);
