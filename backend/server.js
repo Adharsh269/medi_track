@@ -7,6 +7,7 @@ dotenv.config();
 
 import { pool } from "./config/db.js";
 import patientRoutes from "./modules/patients/patient.routes.js";
+import profileRoutes from './routes/profiles.js'
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +27,8 @@ app.post("/api/test", (req, res) => {
 
 
 app.use("/api/patients", patientRoutes);
+//using the profile routes.
+app.use('/api/profiles',profileRoutes);
 
 // checking the apis endpoinst
 app.get("/api/health", (req, res) => {
