@@ -1,0 +1,33 @@
+/* Compact, scoped caretaker alerts styling */
+.caretaker-alerts { text-align:left; }
+.caretaker-alerts-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+.caretaker-alerts-header h2 { margin:0 0 4px; }
+.caretaker-alerts-subtitle { margin:0; font-size:.88rem; color:#64748b; }
+.caretaker-alerts .primary-button { width:auto; padding:10px 16px; border-radius:9px; cursor:pointer; }
+.caretaker-alerts .primary-button:disabled { opacity:.6; cursor:wait; }
+.caretaker-alerts .alert-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0 0 18px; }
+.caretaker-alerts .alert-summary-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:13px; text-align:center; display:flex; flex-direction:column; gap:5px; }
+.caretaker-alerts .alert-summary-card span { font-size:.78rem; color:#64748b; }
+.caretaker-alerts .alert-summary-card strong { font-size:1.4rem; color:#172033; }
+.caretaker-alerts .alert-filter { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.caretaker-alerts .alert-filter label { font-size:.9rem; font-weight:600; }
+.caretaker-alerts .alert-filter select { min-width:190px; max-width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; background:white; color:#172033; }
+.caretaker-alerts .caretaker-alerts-list { display:grid; gap:9px; }
+.caretaker-alerts .caretaker-alert-item { border:1px solid #fecaca; border-left:4px solid #dc2626; background:#fff8f8; border-radius:10px; padding:12px 15px; }
+.caretaker-alerts .caretaker-alert-top { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.caretaker-alerts .caretaker-alert-top strong { font-size:.94rem; }
+.caretaker-alerts .caretaker-alert-badge { border-radius:999px; padding:4px 9px; background:#fee2e2; color:#991b1b; font-size:.72rem; font-weight:700; white-space:nowrap; }
+.caretaker-alerts .caretaker-alert-item p { margin:5px 0 8px; font-size:.9rem; line-height:1.4; }
+.caretaker-alerts .caretaker-alert-meta { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:#64748b; font-size:.76rem; }
+.caretaker-alerts .caretaker-alerts-pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; font-size:.82rem; color:#64748b; }
+.caretaker-alerts .caretaker-alerts-empty { padding:28px 14px; text-align:center; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; }
+.caretaker-alerts .caretaker-alerts-empty p { margin:7px 0 0; color:#64748b; }
+.caretaker-alerts .alerts-error { color:#b91c1c; }
+@media (max-width:600px) {
+ .caretaker-alerts-header { align-items:flex-start; flex-direction:column; }
+ .caretaker-alerts .alert-summary { gap:7px; }
+ .caretaker-alerts .alert-summary-card { padding:10px 5px; }
+ .caretaker-alerts .alert-summary-card span { font-size:.68rem; }
+ .caretaker-alerts .alert-filter { flex-direction:column; align-items:stretch; }
+ .caretaker-alerts .alert-filter select { width:100%; }
+}
