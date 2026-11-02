@@ -1,17 +1,17 @@
 
 import express from "express";
-// import {authinticate} from '../middleware/auth.js';
+import { authenticate } from "../middleware/auth.middleware.js";
 
 import {
     getProfiles,
     getProfileById,
     createProfiles,
-    // getMyProfile
+    getMyProfile
 } from "../modules/profiles/profile.controller.js";
 
 const router = express.Router();
 
-// router.get("/me", authinticate, getMyProfile);
+router.get("/me", authenticate, getMyProfile);
 router.get("/", getProfiles);
 router.get("/:id", getProfileById);
 router.post("/", createProfiles);

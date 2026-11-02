@@ -83,38 +83,38 @@ export const getProfileById = async (req, res) => {
     }
   };
 
-// export const getMyProfile = async(req, res) =>{
-//   try {
-//     const userId = req.user?.id;
-//     if(!userId){
-//       return res.status(401).json({
-//         success:false,
-//         message:"Authenticatio is failed"
-//       });
-//     }
-//     const result = await pool.query(
-//       `SELECT id, organization_id, full_name, role, phone, timezone, created_at, updated_at
-//       FROM public.profiles 
-//       WHERE id = $1, [userId]`
-//     )
-//     if (result.rows.length === 0) {
-//       return res.status(404).json({
-//         success:false,
-//         message:"Profile is not found"
-//       });
-//     }
-//     return res.status(200).json({
-//       success:true,
-//       data:result.rows[0],
-//     });
-//   } catch (error) {
-//     console.log("Profile error:", error.message);
-//     return res.status(500).json({
-//       success:false,
-//       message:error
-//     });
-//   }
-// }
+export const getMyProfile = async(req, res) =>{
+  try {
+    const userId = req.user?.id;
+    if(!userId){
+      return res.status(401).json({
+        success:false,
+        message:"Authenticatio is failed"
+      });
+    }
+    const result = await pool.query(
+      `SELECT id, organization_id, full_name, role, phone, timezone, created_at, updated_at
+      FROM public.profiles 
+      WHERE id = $1, [userId]`
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success:false,
+        message:"Profile is not found"
+      });
+    }
+    return res.status(200).json({
+      success:true,
+      data:result.rows[0],
+    });
+  } catch (error) {
+    console.log("Profile error:", error.message);
+    return res.status(500).json({
+      success:false,
+      message:error
+    });
+  }
+}
 
 export const createProfiles = async(req, res) => {
   console.log("Content-Type:", req.headers["content-type"]);
