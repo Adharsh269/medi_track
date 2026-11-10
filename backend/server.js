@@ -1,48 +1,19 @@
+import { createApp } from './app.js';
+import { pool } from './config/db.js';
 
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import { pool } from "./config/db.js";
-import patientRoutes from "./modules/patients/patient.routes.js";
-
-dotenv.config();
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.post("/api/test", (req, res) => { 
-  console.log("Received body:", req.body);
-
-  res.status(200).json({
-    message: "Postman body received successfully!",
-    receivedData: req.body,
-  });
+// This API-only assignment has no login or authorization middleware.
+// Keep it local; integrate authentication before deployment or real-user access.
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Add authentication/authorization before production deployment.');
+}
+const app = createApp(pool);
+const port = Number(process.env.PORT || 5000);
+const server = app.listen(port, '127.0.0.1', () => {
+  console.log(`Database API running at http://127.0.0.1:${port}`);
 });
-
-app.use("/api/patients", patientRoutes);
-
-//server code
-app.get("/", async (req, res) => {
-  try {
-    await pool.query("SELECT 1");
-
-    res.status(200).json({
-      message: "Patient backend is running!",
-      database: "Connected to Supabase PostgreSQL",
-    });
-  } catch (error) {
-    console.error("Database error:", error.message);
-
-    res.status(503).json({
-      message: "Backend is running, but database connection failed.",
-    });
-  }
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+function shutdown() {
+  server.close(async () => { await pool.end(); process.exit(0); });
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
