@@ -1,6 +1,6 @@
 
-const express = require("express");
-const { requireAuth } = require("../middleware/auth");
+import express from "express";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -130,4 +130,4 @@ router.patch("/me", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
 
-const { createClient } = require("@supabase/supabase-js");
+import { createClient } from "@supabase/supabase-js";
 
 function requireAuth(req, res, next) {
   const authorization = req.headers.authorization;
@@ -64,4 +64,4 @@ function requireAuth(req, res, next) {
   });
 }
 
-module.exports = { requireAuth };
+export { requireAuth };
