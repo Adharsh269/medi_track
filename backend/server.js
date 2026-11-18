@@ -6,6 +6,7 @@ import cors from "cors";
 import profileRoutes from "./routes/profile.js";
 import medicationRoutes from "./modules/medications/medication.routes.js";
 import doseRoutes from "./modules/doses/dose.routes.js";
+import assignmentRoutes from "./modules/caretakers/assignment.routes.js";
 
 dotenv.config();
 
@@ -38,6 +39,9 @@ app.use("/api/medications", medicationRoutes);
 
 //6. Dose routes
 app.use("/api/doses", doseRoutes);
+
+//7. Caretaker routes
+app.use("/api/assignments", assignmentRoutes);
 
 // 6. Handle unknown routes
 app.use((req, res) => {

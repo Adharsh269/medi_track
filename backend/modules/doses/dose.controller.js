@@ -119,8 +119,12 @@ export async function getDose(req, res) {
 
 // PATCH /api/doses/:id
 
+
 export async function updateDose(req, res) {
   try {
+    // Confirm the user has a patient profile.
+    await getPatientTimezone(req);
+
     const body = req.body;
 
     if (
@@ -129,15 +133,23 @@ export async function updateDose(req, res) {
       Array.isArray(body)
     ) {
       return res.status(400).json({
-        error: "Invalid request body"
+        error: "Request body must be an object"
       });
     }
 
-    const allowed = ["status", "notes", "snoozed_until"];
+    const allowedFields = [
+      "status",
+      "notes",
+      "snoozed_until"
+    ];
 
-    if (Object.keys(body).some(k => !allowed.includes(k))) {
+    if (
+      Object.keys(body).some(
+        key => !allowedFields.includes(key)
+      )
+    ) {
       return res.status(400).json({
-        error: "Unknown dose update field"
+        error: "Unknown or restricted dose field"
       });
     }
 
@@ -160,39 +172,78 @@ export async function updateDose(req, res) {
     }
 
     if (
-      snoozed_until !== undefined &&
-      snoozed_until !== null &&
-      (typeof snoozed_until !== "string" ||
-       Number.isNaN(Date.parse(snoozed_until)) ||
-       !/([zZ]|[+-]\d{2}:\d{2})$/.test(snoozed_until))
+      status !== "snoozed" &&
+      snoozed_until !== undefined
     ) {
       return res.status(400).json({
-        error: "Invalid snooze timestamp"
+        error: "Snooze time is only valid for snoozed status"
       });
     }
 
+    let snoozeTime = null;
+
+    if (status === "snoozed") {
+      if (
+        typeof snoozed_until !== "string" ||
+        !/([zZ]|[+-]\d{2}:\d{2})$/.test(snoozed_until)
+      ) {
+        return res.status(400).json({
+          error: "Provide an ISO timestamp with timezone"
+        });
+      }
+
+      const parsed = DateTime.fromISO(snoozed_until, {
+        setZone: true
+      });
+
+      if (!parsed.isValid) {
+        return res.status(400).json({
+          error: "Invalid snooze timestamp"
+        });
+      }
+
+      snoozeTime = parsed.toUTC().toISO();
+    }
+
     const { data, error } = await req.supabase.rpc(
-      "respond_to_dose",
+      "record_dose_response",
       {
         p_dose_id: req.params.id,
         p_status: status,
         p_notes: notes ?? null,
-        p_snoozed_until: snoozed_until ?? null
+        p_snoozed_until: snoozeTime
       }
     );
 
     if (error) {
-      console.error("Dose update:", error.message);
+      if (error.code === "P0002") {
+        return res.status(404).json({
+          error: "Dose not found"
+        });
+      }
 
-      const statusCode =
-        error.code === "42501" ? 403 :
-        error.code === "23514" ? 409 :
-        error.code === "22023" ? 400 : 500;
+      if (error.code === "23514") {
+        return res.status(409).json({
+          error: "Dose already finalized"
+        });
+      }
 
-      return res.status(statusCode).json({
-        error: statusCode === 500
-          ? "Failed to update dose"
-          : error.message
+      if (error.code === "22023") {
+        return res.status(400).json({
+          error: error.message
+        });
+      }
+
+      if (error.code === "28000") {
+        return res.status(401).json({
+          error: "Authentication required"
+        });
+      }
+
+      console.error("Dose RPC error:", error);
+
+      return res.status(500).json({
+        error: "Failed to update dose"
       });
     }
 
@@ -202,10 +253,6 @@ export async function updateDose(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      error: "Internal server error"
-    });
+    return sendError(res, error);
   }
 }
