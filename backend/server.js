@@ -7,6 +7,7 @@ import profileRoutes from "./routes/profile.js";
 import medicationRoutes from "./modules/medications/medication.routes.js";
 import doseRoutes from "./modules/doses/dose.routes.js";
 import assignmentRoutes from "./modules/caretakers/assignment.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 dotenv.config();
 
@@ -42,6 +43,9 @@ app.use("/api/doses", doseRoutes);
 
 //7. Caretaker routes
 app.use("/api/assignments", assignmentRoutes);
+
+// 8.Notification routes
+app.use("/api/notifications", notificationRoutes);
 
 // 6. Handle unknown routes
 app.use((req, res) => {
