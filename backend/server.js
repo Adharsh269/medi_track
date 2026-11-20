@@ -8,6 +8,12 @@ import medicationRoutes from "./modules/medications/medication.routes.js";
 import doseRoutes from "./modules/doses/dose.routes.js";
 import assignmentRoutes from "./modules/caretakers/assignment.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
+import pushRoutes from "./modules/notifications/push.routes.js";
+// import {
+//   startNotificationScheduler
+// } from "./jobs/notificationScheduler.js";
+import { startNotificationScheduler } from
+  "./modules/notifications/notification.scheduler.js";
 
 dotenv.config();
 
@@ -47,6 +53,8 @@ app.use("/api/assignments", assignmentRoutes);
 // 8.Notification routes
 app.use("/api/notifications", notificationRoutes);
 
+app.use("/api/push", pushRoutes);
+
 // 6. Handle unknown routes
 app.use((req, res) => {
   res.status(404).json({
@@ -57,4 +65,8 @@ app.use((req, res) => {
 // 7. Start server
 app.listen(PORT, () => {
   console.log(`MedicTrack API running on http://localhost:${PORT}`);
+
+  if (process.env.ENABLE_NOTIFICATION_SCHEDULER === "true") {
+    startNotificationScheduler();
+  }
 });
