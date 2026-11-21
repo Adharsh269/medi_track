@@ -1,13 +1,10 @@
-
-import pg from "pg";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-const { Pool } = pg;
-
-export const pool = new Pool({
+import 'dotenv/config';
+import pg from 'pg';
+if (!process.env.DATABASE_URL) throw new Error('Set DATABASE_URL in backend/.env');
+export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
   connectionTimeoutMillis: 10000,
+  max: 10
 });
+pool.on('error', error => console.error('Database connection error:', error.code || error.name));

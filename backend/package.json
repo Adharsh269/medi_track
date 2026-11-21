@@ -23,8 +23,12 @@
     "node-cron": "^4.6.0",
     "pg": "^8.23.1",
     "postgres": "^3.4.9",
+<<<<<<< HEAD
     "twilio": "^6.3.1",
     "web-push": "^4.0.0"
+=======
+    "swagger-ui-express": "^5.0.1"
+>>>>>>> origin/branch2
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
